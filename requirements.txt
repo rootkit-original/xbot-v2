@@ -1,0 +1,77 @@
+# XBot v2 - Requirements
+# Sistema Completo de Trading Bot para Binance
+
+# Core Dependencies
+asyncio>=3.4.3
+aiohttp>=3.8.0
+websockets>=11.0.3
+
+# Binance API Integration
+python-binance>=1.0.17
+ccxt>=4.1.0
+
+# Technical Analysis
+TA-Lib>=0.4.28
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Data Manipulation and Analysis
+scipy>=1.10.0
+scikit-learn>=1.3.0
+
+# Telegram Bot Integration
+python-telegram-bot>=20.0
+
+# Configuration and Environment
+python-dotenv>=1.0.0
+pydantic>=2.0.0
+
+# Logging and Monitoring
+structlog>=23.0.0
+colorama>=0.4.6
+
+# CLI Interface
+click>=8.1.0
+rich>=13.0.0
+tabulate>=0.9.0
+
+# Data Storage (Optional - for advanced persistence)
+sqlalchemy>=2.0.0
+aiosqlite>=0.19.0
+
+# Testing (Development)
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-mock>=3.11.0
+
+# Code Quality (Development)
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.5.0
+
+# Documentation (Development)
+sphinx>=7.0.0
+sphinx-rtd-theme>=1.3.0
+
+# Performance Monitoring (Optional)
+psutil>=5.9.0
+memory-profiler>=0.61.0
+
+# Visualization (Optional)
+matplotlib>=3.7.0
+plotly>=5.15.0
+
+# Encryption (Optional - for sensitive data)
+cryptography>=41.0.0
+
+# HTTP Client Alternative
+requests>=2.31.0
+
+# Date/Time Utilities
+python-dateutil>=2.8.2
+
+# JSON/Data Serialization
+orjson>=3.9.0
+
+# Decimal Precision
+decimal-extra>=1.0.0
