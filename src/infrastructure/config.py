@@ -13,6 +13,16 @@ import json
 import logging
 import sys
 
+try:
+    from dotenv import load_dotenv
+    # Carrega .env da raiz do projeto
+    # Para src/infrastructure/config.py: parent = infrastructure, parent.parent = src, parent.parent.parent = projeto
+    project_root = Path(__file__).parent.parent.parent
+    env_path = project_root / '.env'
+    load_dotenv(env_path)
+except ImportError:
+    print("⚠️ python-dotenv não instalado. Variáveis de ambiente do sistema serão usadas.")
+
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -116,9 +126,20 @@ class XBotConfig:
     def __post_init__(self):
         """Initialize defaults after creation"""
         if self.binance is None:
-            self.binance = BinanceConfig()
+            # Carregar da variável de ambiente se disponível
+            self.binance = BinanceConfig(
+                api_key=os.getenv("BINANCE_API_KEY", ""),
+                api_secret=os.getenv("BINANCE_SECRET_KEY", ""),
+                testnet=os.getenv("BINANCE_TESTNET", "true").lower() == "true",
+            )
         if self.telegram is None:
-            self.telegram = TelegramConfig()
+            # Carregar da variável de ambiente se disponível
+            self.telegram = TelegramConfig(
+                bot_token=os.getenv("TELEGRAM_BOT_TOKEN", ""),
+                admin_chat_id=os.getenv("TELEGRAM_CHAT_ID", ""),
+                group_chat_id=os.getenv("TELEGRAM_GROUP_CHAT_ID"),
+                enabled=os.getenv("TELEGRAM_NOTIFICATIONS_ENABLED", "true").lower() == "true",
+            )
 
     @property
     def binance_testnet(self) -> bool:
@@ -132,16 +153,16 @@ class XBotConfig:
         # Binance Config
         binance_config = BinanceConfig(
             api_key=os.getenv("BINANCE_API_KEY", ""),
-            api_secret=os.getenv("BINANCE_API_SECRET", ""),
+            api_secret=os.getenv("BINANCE_SECRET_KEY", ""),
             testnet=os.getenv("BINANCE_TESTNET", "true").lower() == "true",
         )
 
         # Telegram Config
         telegram_config = TelegramConfig(
             bot_token=os.getenv("TELEGRAM_BOT_TOKEN", ""),
-            admin_chat_id=os.getenv("TELEGRAM_ADMIN_CHAT_ID", ""),
+            admin_chat_id=os.getenv("TELEGRAM_CHAT_ID", ""),  # Usar TELEGRAM_CHAT_ID do .env
             group_chat_id=os.getenv("TELEGRAM_GROUP_CHAT_ID"),
-            enabled=os.getenv("TELEGRAM_ENABLED", "true").lower() == "true",
+            enabled=os.getenv("TELEGRAM_NOTIFICATIONS_ENABLED", "true").lower() == "true",
         )
 
         # AI Config
@@ -287,7 +308,7 @@ class XBotConfig:
         if not self.binance.api_key:
             errors.append("BINANCE_API_KEY não configurado")
         if not self.binance.api_secret:
-            errors.append("BINANCE_API_SECRET não configurado")
+            errors.append("BINANCE_SECRET_KEY não configurado")
 
         # Telegram validation (opcional se disabled)
         if self.telegram.enabled:
@@ -452,7 +473,7 @@ class ConfigManager:
 
 # Binance API Configuration
 BINANCE_API_KEY=your_binance_api_key_here
-BINANCE_API_SECRET=your_binance_secret_here
+BINANCE_SECRET_KEY=your_binance_secret_here
 BINANCE_TESTNET=true
 
 # Telegram Configuration

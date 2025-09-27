@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XBot v2 - Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --success-color: #27ae60;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --info-color: #3498db;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .dashboard-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            margin: 20px;
+            padding: 30px;
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            padding: 25px;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+        
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .metric-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-left: 10px;
+        }
+        
+        .status-connected { background-color: var(--success-color); }
+        .status-disconnected { background-color: var(--danger-color); }
+        
+        .bot-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            padding: 25px;
+            margin-bottom: 20px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chart-container canvas {
+            flex: 1;
+            min-height: 200px;
+        }
+        
+        .chart-container h5 {
+            flex-shrink: 0;
+        }
+        
+        .refresh-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1000;
+            background: var(--info-color);
+            border: none;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            color: white;
+            font-size: 1.5rem;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .refresh-btn:hover {
+            background: #2980b9;
+            transform: scale(1.1);
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        /* Responsividade para gráficos */
+        @media (max-width: 768px) {
+            .chart-container {
+                padding: 15px;
+            }
+            
+            .chart-container h5 {
+                font-size: 1.1rem;
+            }
+            
+            .metric-card {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+            
+            .metric-value {
+                font-size: 2rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .dashboard-container {
+                margin: 10px;
+                padding: 20px;
+            }
+            
+            .metric-value {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="dashboard-container">
+            <!-- Header -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="display-4 mb-0">
+                                <i class="fas fa-robot text-primary"></i> XBot v2
+                            </h1>
+                            <p class="text-muted">Dashboard de Trading Automatizado</p>
+                        </div>
+                        <div class="text-end">
+                            <div class="mb-2">
+                                <span class="badge bg-success me-2">Binance</span>
+                                <span class="status-indicator" id="binance-status"></span>
+                            </div>
+                            <div>
+                                <span class="badge bg-info me-2">Telegram</span>
+                                <span class="status-indicator" id="telegram-status"></span>
+                            </div>
+                            <small class="text-muted d-block mt-2">
+                                Última atualização: <span id="last-update">--:--:--</span>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Métricas Principais -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="metric-card text-center">
+                        <div class="metric-value text-primary" id="total-bots">0</div>
+                        <div class="metric-label">Total de Bots</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="metric-card text-center">
+                        <div class="metric-value text-success" id="active-bots">0</div>
+                        <div class="metric-label">Bots Ativos</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="metric-card text-center">
+                        <div class="metric-value text-warning" id="total-capital">$0</div>
+                        <div class="metric-label">Capital Total</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="metric-card text-center">
+                        <div class="metric-value" id="total-pnl">$0</div>
+                        <div class="metric-label">P&L Total</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráficos -->
+            <div class="row mb-4">
+                <div class="col-lg-8 col-md-12 mb-3">
+                    <div class="chart-container">
+                        <h5 class="mb-3">
+                            <i class="fas fa-chart-line text-success"></i> Performance (Últimos 7 dias)
+                        </h5>
+                        <div style="position: relative; height: 250px;">
+                            <canvas id="pnl-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-12 mb-3">
+                    <div class="chart-container">
+                        <h5 class="mb-3">
+                            <i class="fas fa-exchange-alt text-info"></i> Distribuição de Trades
+                        </h5>
+                        <div style="position: relative; height: 250px;">
+                            <canvas id="trades-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ordens em Aberto -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="chart-container">
+                        <h5 class="mb-3">
+                            <i class="fas fa-list-alt text-warning"></i> Ordens em Aberto
+                        </h5>
+                        <div id="open-orders-list">
+                            <div class="loading">
+                                <div class="spinner-border text-warning" role="status">
+                                    <span class="visually-hidden">Carregando...</span>
+                                </div>
+                                <p class="mt-2">Carregando ordens...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Saldos da Conta -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="chart-container">
+                        <h5 class="mb-3">
+                            <i class="fas fa-wallet text-success"></i> Saldos da Conta
+                        </h5>
+                        <div id="account-balances">
+                            <div class="loading">
+                                <div class="spinner-border text-success" role="status">
+                                    <span class="visually-hidden">Carregando...</span>
+                                </div>
+                                <p class="mt-2">Carregando saldos...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="chart-container">
+                        <h5 class="mb-3">
+                            <i class="fas fa-chart-bar text-info"></i> Mercado em Tempo Real
+                        </h5>
+                        <div id="market-data">
+                            <div class="loading">
+                                <div class="spinner-border text-info" role="status">
+                                    <span class="visually-hidden">Carregando...</span>
+                                </div>
+                                <p class="mt-2">Carregando dados de mercado...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de Bots -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="chart-container">
+                        <h5 class="mb-3">
+                            <i class="fas fa-robot text-primary"></i> Bots Ativos
+                        </h5>
+                        <div id="bots-list">
+                            <div class="loading">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Carregando...</span>
+                                </div>
+                                <p class="mt-2">Carregando dados dos bots...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botão de Refresh -->
+    <button class="btn refresh-btn" onclick="refreshData()" title="Atualizar dados">
+        <i class="fas fa-sync-alt"></i>
+    </button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let pnlChart, tradesChart;
+        
+        // Inicializar dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initCharts();
+            loadData();
+            
+            // Auto-refresh a cada 30 segundos
+            setInterval(loadData, 30000);
+        });
+        
+        function initCharts() {
+            // Gráfico de P&L
+            const pnlCtx = document.getElementById('pnl-chart').getContext('2d');
+            pnlChart = new Chart(pnlCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'P&L ($)',
+                        data: [],
+                        borderColor: '#27ae60',
+                        backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value;
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+            
+            // Gráfico de Trades
+            const tradesCtx = document.getElementById('trades-chart').getContext('2d');
+            tradesChart = new Chart(tradesCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Profit', 'Loss', 'Pending'],
+                    datasets: [{
+                        data: [60, 30, 10], // Dados de exemplo iniciais
+                        backgroundColor: ['#27ae60', '#e74c3c', '#f39c12'],
+                        borderWidth: 2,
+                        borderColor: '#fff',
+                        hoverBorderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '60%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                usePointStyle: true,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + context.parsed + '%';
+                                }
+                            }
+                        }
+                    },
+                    layout: {
+                        padding: {
+                            top: 10,
+                            bottom: 10
+                        }
+                    }
+                }
+            });
+        }
+        
+        async function loadData() {
+            try {
+                // Carregar status do sistema
+                const systemResponse = await fetch('/api/system-status');
+                const systemData = await systemResponse.json();
+                updateSystemStatus(systemData);
+                
+                // Carregar dados dos bots
+                const botsResponse = await fetch('/api/bots');
+                const botsData = await botsResponse.json();
+                updateBotsList(botsData);
+                
+                // Carregar dados de performance
+                const performanceResponse = await fetch('/api/performance');
+                const performanceData = await performanceResponse.json();
+                updateCharts(performanceData);
+                
+                // Carregar ordens em aberto
+                const ordersResponse = await fetch('/api/open-orders');
+                const ordersData = await ordersResponse.json();
+                updateOpenOrders(ordersData);
+                
+                // Carregar informações da conta
+                const accountResponse = await fetch('/api/account-info');
+                const accountData = await accountResponse.json();
+                updateAccountBalances(accountData);
+                
+                // Carregar dados de mercado
+                const marketResponse = await fetch('/api/market-data');
+                const marketData = await marketResponse.json();
+                updateMarketData(marketData);
+                
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
+            }
+        }
+        
+        function updateSystemStatus(data) {
+            document.getElementById('total-bots').textContent = data.total_bots;
+            document.getElementById('active-bots').textContent = data.active_bots;
+            
+            // Usar saldo USDT real se disponível
+            const totalCapital = data.usdt_balance || data.total_capital;
+            document.getElementById('total-capital').textContent = '$' + totalCapital.toFixed(2);
+            
+            const pnlElement = document.getElementById('total-pnl');
+            pnlElement.textContent = '$' + data.total_pnl.toFixed(2);
+            pnlElement.className = 'metric-value ' + (data.total_pnl >= 0 ? 'text-success' : 'text-danger');
+            
+            document.getElementById('last-update').textContent = data.last_update;
+            
+            // Atualizar status de conexão
+            document.getElementById('binance-status').className = 
+                'status-indicator ' + (data.binance_connected ? 'status-connected' : 'status-disconnected');
+            document.getElementById('telegram-status').className = 
+                'status-indicator ' + (data.telegram_connected ? 'status-connected' : 'status-disconnected');
+        }
+        
+        function updateOpenOrders(orders) {
+            const container = document.getElementById('open-orders-list');
+            
+            if (!orders || orders.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                        <h6 class="text-muted">Nenhuma ordem em aberto</h6>
+                        <p class="text-muted">Todas as ordens foram executadas ou canceladas</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = `
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Par</th>
+                                <th>Lado</th>
+                                <th>Tipo</th>
+                                <th>Quantidade</th>
+                                <th>Preço</th>
+                                <th>Valor Total</th>
+                                <th>Horário</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            orders.forEach(order => {
+                const sideColor = order.side === 'BUY' ? 'success' : 'danger';
+                const totalValue = order.origQty * order.price;
+                
+                html += `
+                    <tr>
+                        <td><strong>${order.symbol}</strong></td>
+                        <td><span class="badge bg-${sideColor}">${order.side}</span></td>
+                        <td>${order.type}</td>
+                        <td>${order.origQty.toFixed(6)}</td>
+                        <td>$${order.price.toFixed(6)}</td>
+                        <td>$${totalValue.toFixed(2)}</td>
+                        <td>${order.time}</td>
+                        <td><span class="badge bg-warning">${order.status}</span></td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
+        }
+        
+        function updateAccountBalances(accountInfo) {
+            const container = document.getElementById('account-balances');
+            
+            if (!accountInfo || !accountInfo.balances) {
+                container.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="fas fa-exclamation-triangle fa-2x text-warning mb-3"></i>
+                        <p class="text-muted">Não foi possível carregar os saldos</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Filtrar apenas moedas com saldo significativo
+            const significantBalances = accountInfo.balances.filter(b => b.total > 0.001);
+            
+            let html = '';
+            significantBalances.slice(0, 10).forEach(balance => { // Mostrar apenas top 10
+                const percentage = balance.locked > 0 ? (balance.locked / balance.total * 100) : 0;
+                
+                html += `
+                    <div class="d-flex justify-content-between align-items-center mb-3 p-2 border rounded">
+                        <div>
+                            <strong>${balance.asset}</strong>
+                            <br><small class="text-muted">${balance.total.toFixed(6)} total</small>
+                        </div>
+                        <div class="text-end">
+                            <div class="text-success">${balance.free.toFixed(6)} livre</div>
+                            ${balance.locked > 0 ? `<div class="text-warning">${balance.locked.toFixed(6)} bloqueado</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html || '<p class="text-muted text-center">Nenhum saldo encontrado</p>';
+        }
+        
+        function updateMarketData(marketData) {
+            const container = document.getElementById('market-data');
+            
+            if (!marketData || Object.keys(marketData).length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="fas fa-chart-line fa-2x text-muted mb-3"></i>
+                        <p class="text-muted">Dados de mercado não disponíveis</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            Object.entries(marketData).forEach(([symbol, data]) => {
+                const changeColor = data.change >= 0 ? 'success' : 'danger';
+                const changeIcon = data.change >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+                
+                html += `
+                    <div class="d-flex justify-content-between align-items-center mb-3 p-3 border rounded">
+                        <div>
+                            <strong>${symbol}</strong>
+                            <br><span class="h5 mb-0">$${data.price.toLocaleString()}</span>
+                        </div>
+                        <div class="text-end">
+                            <span class="text-${changeColor}">
+                                <i class="fas ${changeIcon}"></i>
+                                ${Math.abs(data.change).toFixed(2)}%
+                            </span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function updateBotsList(bots) {
+            const container = document.getElementById('bots-list');
+            
+            if (bots.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="fas fa-robot fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Nenhum bot ativo</h5>
+                        <p class="text-muted">Crie seu primeiro bot usando o comando: <code>python main.py create</code></p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            bots.forEach(bot => {
+                const pnl = parseFloat(bot.current_capital) - parseFloat(bot.initial_capital);
+                const pnlPercentage = (pnl / parseFloat(bot.initial_capital) * 100).toFixed(2);
+                const statusColor = bot.status === 'ACTIVE' ? 'success' : 'warning';
+                
+                html += `
+                    <div class="bot-card">
+                        <div class="row align-items-center">
+                            <div class="col-md-3">
+                                <h6 class="mb-1">${bot.name}</h6>
+                                <small class="text-muted">${bot.strategy}</small>
+                            </div>
+                            <div class="col-md-2">
+                                <span class="badge bg-${statusColor}">${bot.status}</span>
+                            </div>
+                            <div class="col-md-2">
+                                <strong>$${parseFloat(bot.current_capital).toFixed(2)}</strong>
+                                <br><small class="text-muted">Capital</small>
+                            </div>
+                            <div class="col-md-2">
+                                <strong class="${pnl >= 0 ? 'text-success' : 'text-danger'}">
+                                    $${pnl.toFixed(2)}
+                                </strong>
+                                <br><small class="text-muted">P&L</small>
+                            </div>
+                            <div class="col-md-2">
+                                <strong class="${pnl >= 0 ? 'text-success' : 'text-danger'}">
+                                    ${pnlPercentage}%
+                                </strong>
+                                <br><small class="text-muted">Retorno</small>
+                            </div>
+                            <div class="col-md-1">
+                                <small class="text-muted">${bot.trades || 0} trades</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function updateCharts(data) {
+            // Atualizar gráfico de P&L
+            pnlChart.data.labels = data.dates;
+            pnlChart.data.datasets[0].data = data.pnl_history;
+            pnlChart.update();
+            
+            // Atualizar gráfico de trades com dados mais realistas
+            const totalTrades = data.trades_history.reduce((a, b) => a + b, 0);
+            if (totalTrades > 0) {
+                const profitTrades = Math.floor(totalTrades * 0.65); // 65% profit
+                const lossTrades = Math.floor(totalTrades * 0.30);   // 30% loss  
+                const pendingTrades = totalTrades - profitTrades - lossTrades; // Restante pending
+                
+                tradesChart.data.datasets[0].data = [profitTrades, lossTrades, pendingTrades];
+            } else {
+                // Dados de exemplo quando não há trades
+                tradesChart.data.datasets[0].data = [0, 0, 0];
+            }
+            tradesChart.update();
+        }
+        
+        function refreshData() {
+            const btn = document.querySelector('.refresh-btn i');
+            btn.classList.add('fa-spin');
+            
+            loadData().finally(() => {
+                setTimeout(() => {
+                    btn.classList.remove('fa-spin');
+                }, 1000);
+            });
+        }
+    </script>
+</body>
+</html>

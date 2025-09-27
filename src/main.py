@@ -28,7 +28,7 @@ from infrastructure.pattern_detection_service import PatternDetectionService
 from infrastructure.risk_analysis_service import RiskAnalysisService
 from infrastructure.signal_generation_service import SignalGenerationService
 from infrastructure.compliance_service import ComplianceService
-from infrastructure.telegram_service import TelegramService
+from infrastructure.telegram_service import TelegramNotificationService as TelegramService
 from infrastructure.bot_repository import InMemoryBotRepository
 from infrastructure.config import XBotConfig
 from strategies.predefined_strategies import TradingStrategies
