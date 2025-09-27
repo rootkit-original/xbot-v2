@@ -21,48 +21,47 @@ logger = logging.getLogger(__name__)
 
 class TelegramNotificationService(INotificationService):
     """Serviço de notificações via Telegram"""
-    
+
     def __init__(self, bot_token: str, admin_chat_id: str, group_chat_id: Optional[str] = None):
         self.bot_token = bot_token
         self.admin_chat_id = admin_chat_id
         self.group_chat_id = group_chat_id
         self.base_url = f"https://api.telegram.org/bot{bot_token}"
-        
+
         # Rate limiting
         self.last_message_time = {}
         self.min_interval = 5  # Seconds between messages
-        
+
         # Message templates
         self.emoji_map = {
-            'success': '✅',
-            'warning': '⚠️',
-            'error': '❌',
-            'info': 'ℹ️',
-            'money': '💰',
-            'chart_up': '📈',
-            'chart_down': '📉',
-            'robot': '🤖',
-            'fire': '🔥',
-            'target': '🎯',
-            'shield': '🛡️'
+            "success": "✅",
+            "warning": "⚠️",
+            "error": "❌",
+            "info": "ℹ️",
+            "money": "💰",
+            "chart_up": "📈",
+            "chart_down": "📉",
+            "robot": "🤖",
+            "fire": "🔥",
+            "target": "🎯",
+            "shield": "🛡️",
         }
-    
-    async def send_trade_notification(
-        self, 
-        bot_id: str, 
-        order: Order, 
-        message: str
-    ) -> bool:
+
+    async def send_trade_notification(self, bot_id: str, order: Order, message: str) -> bool:
         """Envia notificação de trade"""
         logger.info(f"Enviando notificação de trade: {order.order_id}")
-        
+
         # Rate limiting check
         if not self._can_send_message(f"trade_{bot_id}"):
             return False
-        
-        emoji = self.emoji_map['chart_up'] if order.side.value == 'BUY' else self.emoji_map['chart_down']
-        status_emoji = self.emoji_map['success'] if order.is_filled else self.emoji_map['info']
-        
+
+        emoji = (
+            self.emoji_map["chart_up"]
+            if order.side.value == "BUY"
+            else self.emoji_map["chart_down"]
+        )
+        status_emoji = self.emoji_map["success"] if order.is_filled else self.emoji_map["info"]
+
         text = f"""
 {status_emoji} **TRADE EXECUTADO**
 
@@ -76,32 +75,32 @@ class TelegramNotificationService(INotificationService):
 
 {message}
         """.strip()
-        
+
         success = await self._send_message(self.admin_chat_id, text)
-        
+
         # Also send to group if configured
         if self.group_chat_id and success:
             await self._send_message(self.group_chat_id, text)
-        
+
         return success
-    
+
     async def send_alert(self, title: str, message: str, urgency: str = "normal") -> bool:
         """Envia alerta geral"""
         logger.info(f"Enviando alerta: {title}")
-        
+
         if not self._can_send_message(f"alert_{urgency}"):
             return False
-        
+
         # Choose emoji based on urgency
         urgency_emojis = {
-            'low': self.emoji_map['info'],
-            'normal': self.emoji_map['warning'],
-            'high': self.emoji_map['error'],
-            'critical': self.emoji_map['fire']
+            "low": self.emoji_map["info"],
+            "normal": self.emoji_map["warning"],
+            "high": self.emoji_map["error"],
+            "critical": self.emoji_map["fire"],
         }
-        
-        emoji = urgency_emojis.get(urgency, self.emoji_map['info'])
-        
+
+        emoji = urgency_emojis.get(urgency, self.emoji_map["info"])
+
         text = f"""
 {emoji} **{title.upper()}**
 
@@ -109,18 +108,22 @@ class TelegramNotificationService(INotificationService):
 
 ⏰ {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         """.strip()
-        
+
         return await self._send_message(self.admin_chat_id, text)
-    
+
     async def send_performance_report(self, bot: TradingBot) -> bool:
         """Envia relatório de performance"""
         logger.info(f"Enviando relatório de performance: {bot.name}")
-        
+
         if not self._can_send_message(f"report_{bot.id}"):
             return False
-        
-        profit_emoji = self.emoji_map['chart_up'] if bot.profit_percentage > 0 else self.emoji_map['chart_down']
-        
+
+        profit_emoji = (
+            self.emoji_map["chart_up"]
+            if bot.profit_percentage > 0
+            else self.emoji_map["chart_down"]
+        )
+
         text = f"""
 📊 **RELATÓRIO DIÁRIO - {bot.name}**
 
@@ -144,13 +147,13 @@ class TelegramNotificationService(INotificationService):
 
 ⏰ {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         """.strip()
-        
+
         return await self._send_message(self.admin_chat_id, text)
-    
+
     async def send_risk_alert(self, bot: TradingBot, risk_message: str) -> bool:
         """Envia alerta de risco"""
         logger.warning(f"Enviando alerta de risco: {bot.name}")
-        
+
         text = f"""
 🚨 **ALERTA DE RISCO**
 
@@ -167,24 +170,19 @@ class TelegramNotificationService(INotificationService):
 
 **Ação recomendada:** Verificar configurações do bot imediatamente!
         """.strip()
-        
+
         return await self._send_message(self.admin_chat_id, text)
-    
-    async def send_pattern_alert(
-        self, 
-        symbol: str, 
-        patterns: List, 
-        confidence: Decimal
-    ) -> bool:
+
+    async def send_pattern_alert(self, symbol: str, patterns: List, confidence: Decimal) -> bool:
         """Envia alerta de padrão detectado"""
         if not patterns:
             return False
-        
+
         logger.info(f"Enviando alerta de padrão: {symbol}")
-        
-        pattern_names = [p.pattern_type.value.replace('_', ' ').title() for p in patterns]
-        pattern_list = '\n'.join([f"• {name}" for name in pattern_names])
-        
+
+        pattern_names = [p.pattern_type.value.replace("_", " ").title() for p in patterns]
+        pattern_list = "\n".join([f"• {name}" for name in pattern_names])
+
         text = f"""
 🔍 **PADRÃO DETECTADO**
 
@@ -196,25 +194,21 @@ class TelegramNotificationService(INotificationService):
 
 ⏰ {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         """.strip()
-        
+
         return await self._send_message(self.admin_chat_id, text)
-    
-    async def send_market_summary(
-        self, 
-        symbol: str, 
-        analysis_data: Dict
-    ) -> bool:
+
+    async def send_market_summary(self, symbol: str, analysis_data: Dict) -> bool:
         """Envia resumo de análise de mercado"""
         logger.info(f"Enviando resumo de mercado: {symbol}")
-        
+
         sentiment_emoji = {
-            'BULLISH': self.emoji_map['chart_up'],
-            'BEARISH': self.emoji_map['chart_down'],
-            'NEUTRAL': self.emoji_map['info']
+            "BULLISH": self.emoji_map["chart_up"],
+            "BEARISH": self.emoji_map["chart_down"],
+            "NEUTRAL": self.emoji_map["info"],
         }
-        
-        sentiment = analysis_data.get('sentiment', 'NEUTRAL')
-        
+
+        sentiment = analysis_data.get("sentiment", "NEUTRAL")
+
         text = f"""
 📊 **ANÁLISE DE MERCADO - {symbol}**
 
@@ -228,26 +222,25 @@ class TelegramNotificationService(INotificationService):
 
 ⏰ {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         """.strip()
-        
+
         return await self._send_message(self.admin_chat_id, text)
-    
-    async def send_position_update(
-        self, 
-        position: Position, 
-        action: str, 
-        reason: str = ""
-    ) -> bool:
+
+    async def send_position_update(self, position: Position, action: str, reason: str = "") -> bool:
         """Envia atualização de posição"""
         logger.info(f"Enviando atualização de posição: {position.symbol}")
-        
+
         action_emojis = {
-            'opened': self.emoji_map['chart_up'],
-            'closed': self.emoji_map['money'],
-            'updated': self.emoji_map['info']
+            "opened": self.emoji_map["chart_up"],
+            "closed": self.emoji_map["money"],
+            "updated": self.emoji_map["info"],
         }
-        
-        pnl_emoji = self.emoji_map['chart_up'] if position.pnl_percentage > 0 else self.emoji_map['chart_down']
-        
+
+        pnl_emoji = (
+            self.emoji_map["chart_up"]
+            if position.pnl_percentage > 0
+            else self.emoji_map["chart_down"]
+        )
+
         text = f"""
 {action_emojis.get(action, self.emoji_map['info'])} **POSIÇÃO {action.upper()}**
 
@@ -263,24 +256,21 @@ class TelegramNotificationService(INotificationService):
 
 ⏰ {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         """.strip()
-        
+
         return await self._send_message(self.admin_chat_id, text)
-    
+
     async def send_system_status(
-        self, 
-        active_bots: int, 
-        total_positions: int, 
-        system_health: str
+        self, active_bots: int, total_positions: int, system_health: str
     ) -> bool:
         """Envia status do sistema"""
         logger.info("Enviando status do sistema")
-        
+
         health_emojis = {
-            'healthy': self.emoji_map['success'],
-            'warning': self.emoji_map['warning'],
-            'critical': self.emoji_map['error']
+            "healthy": self.emoji_map["success"],
+            "warning": self.emoji_map["warning"],
+            "critical": self.emoji_map["error"],
         }
-        
+
         text = f"""
 🤖 **STATUS DO SISTEMA XBOT**
 
@@ -292,29 +282,29 @@ class TelegramNotificationService(INotificationService):
 
 ⏰ {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         """.strip()
-        
+
         return await self._send_message(self.admin_chat_id, text)
-    
+
     async def send_custom_message(self, message: str, chat_id: Optional[str] = None) -> bool:
         """Envia mensagem customizada"""
         target_chat = chat_id or self.admin_chat_id
         return await self._send_message(target_chat, message)
-    
+
     # ========================================
     # Private Helper Methods
     # ========================================
-    
+
     async def _send_message(self, chat_id: str, text: str, parse_mode: str = "Markdown") -> bool:
         """Envia mensagem via API do Telegram"""
         url = f"{self.base_url}/sendMessage"
-        
+
         payload = {
-            'chat_id': chat_id,
-            'text': text,
-            'parse_mode': parse_mode,
-            'disable_web_page_preview': True
+            "chat_id": chat_id,
+            "text": text,
+            "parse_mode": parse_mode,
+            "disable_web_page_preview": True,
         }
-        
+
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.post(url, json=payload) as response:
@@ -325,46 +315,48 @@ class TelegramNotificationService(INotificationService):
                         error_data = await response.json()
                         logger.error(f"Erro ao enviar mensagem: {error_data}")
                         return False
-                        
+
         except aiohttp.ClientError as e:
             logger.error(f"Erro de conexão ao Telegram: {e}")
             return False
         except Exception as e:
             logger.error(f"Erro inesperado ao enviar mensagem: {e}")
             return False
-    
+
     def _can_send_message(self, message_key: str) -> bool:
         """Verifica se pode enviar mensagem (rate limiting)"""
         current_time = datetime.now().timestamp()
         last_time = self.last_message_time.get(message_key, 0)
-        
+
         if current_time - last_time >= self.min_interval:
             self.last_message_time[message_key] = current_time
             return True
-        
+
         logger.debug(f"Rate limit ativo para {message_key}")
         return False
-    
+
     async def test_connection(self) -> bool:
         """Testa conexão com o Telegram"""
         url = f"{self.base_url}/getMe"
-        
+
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(url) as response:
                     if response.status == 200:
                         data = await response.json()
-                        bot_info = data.get('result', {})
-                        logger.info(f"Conexão Telegram OK. Bot: {bot_info.get('first_name', 'Unknown')}")
+                        bot_info = data.get("result", {})
+                        logger.info(
+                            f"Conexão Telegram OK. Bot: {bot_info.get('first_name', 'Unknown')}"
+                        )
                         return True
                     else:
                         logger.error(f"Erro na conexão Telegram: {response.status}")
                         return False
-                        
+
         except Exception as e:
             logger.error(f"Erro ao testar conexão Telegram: {e}")
             return False
-    
+
     async def send_startup_message(self) -> bool:
         """Envia mensagem de inicialização"""
         text = f"""
@@ -375,9 +367,9 @@ class TelegramNotificationService(INotificationService):
 
 Status: **OPERACIONAL** ✅
         """.strip()
-        
+
         return await self._send_message(self.admin_chat_id, text)
-    
+
     async def send_shutdown_message(self) -> bool:
         """Envia mensagem de desligamento"""
         text = f"""
@@ -388,5 +380,5 @@ Status: **OPERACIONAL** ✅
 
 Status: **PARADO** ⏹️
         """.strip()
-        
+
         return await self._send_message(self.admin_chat_id, text)
