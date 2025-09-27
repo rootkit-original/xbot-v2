@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XBot v2 - Dashboard</title>
+    <link rel="stylesheet" href="../static/css/internal-layout.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Header/Navbar similar ao Bybit -->
+    <header class="main-header">
+        <nav class="navbar">
+            <!-- Logo -->
+            <div class="navbar-brand">
+                <a href="/dashboard" class="brand-link">
+                    <img src="../static/images/xbot-logo.svg" alt="XBot v2" class="brand-logo">
+                    <span class="brand-text">XBot v2</span>
+                </a>
+            </div>
+
+            <!-- Navigation Menu -->
+            <div class="navbar-menu">
+                <div class="navbar-nav">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link dropdown-toggle" data-dropdown="bots">
+                            <i class="fas fa-robot"></i>
+                            Bots
+                            <i class="fas fa-chevron-down"></i>
+                        </a>
+                        <div class="dropdown-menu" id="bots-dropdown">
+                            <a href="/bots" class="dropdown-item">
+                                <i class="fas fa-list"></i>
+                                Meus Bots
+                            </a>
+                            <a href="/bots/create" class="dropdown-item">
+                                <i class="fas fa-plus"></i>
+                                Criar Bot
+                            </a>
+                            <a href="/bots/templates" class="dropdown-item">
+                                <i class="fas fa-template"></i>
+                                Templates
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link dropdown-toggle" data-dropdown="strategies">
+                            <i class="fas fa-chart-line"></i>
+                            Estratégias
+                            <i class="fas fa-chevron-down"></i>
+                        </a>
+                        <div class="dropdown-menu" id="strategies-dropdown">
+                            <a href="/strategies" class="dropdown-item">
+                                <i class="fas fa-list"></i>
+                                Todas Estratégias
+                            </a>
+                            <a href="/strategies/scalping" class="dropdown-item">
+                                <i class="fas fa-bolt"></i>
+                                Scalping
+                            </a>
+                            <a href="/strategies/swing" class="dropdown-item">
+                                <i class="fas fa-wave-square"></i>
+                                Swing Trading
+                            </a>
+                            <a href="/strategies/dca" class="dropdown-item">
+                                <i class="fas fa-layer-group"></i>
+                                DCA
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="nav-item">
+                        <a href="/portfolio" class="nav-link">
+                            <i class="fas fa-briefcase"></i>
+                            Portfolio
+                        </a>
+                    </div>
+
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link dropdown-toggle" data-dropdown="tools">
+                            <i class="fas fa-tools"></i>
+                            Ferramentas
+                            <i class="fas fa-chevron-down"></i>
+                        </a>
+                        <div class="dropdown-menu" id="tools-dropdown">
+                            <a href="/backtest" class="dropdown-item">
+                                <i class="fas fa-history"></i>
+                                Backtest
+                            </a>
+                            <a href="/analytics" class="dropdown-item">
+                                <i class="fas fa-chart-bar"></i>
+                                Analytics
+                            </a>
+                            <a href="/alerts" class="dropdown-item">
+                                <i class="fas fa-bell"></i>
+                                Alertas
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link dropdown-toggle" data-dropdown="learn">
+                            <i class="fas fa-graduation-cap"></i>
+                            Aprender
+                            <i class="fas fa-chevron-down"></i>
+                        </a>
+                        <div class="dropdown-menu" id="learn-dropdown">
+                            <a href="/education" class="dropdown-item">
+                                <i class="fas fa-book"></i>
+                                Centro Educacional
+                            </a>
+                            <a href="/tutorials" class="dropdown-item">
+                                <i class="fas fa-play-circle"></i>
+                                Tutoriais
+                            </a>
+                            <a href="/docs" class="dropdown-item">
+                                <i class="fas fa-file-alt"></i>
+                                Documentação
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="nav-item">
+                        <a href="/settings" class="nav-link">
+                            <i class="fas fa-cog"></i>
+                            Configurações
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right side controls -->
+            <div class="navbar-controls">
+                <!-- Notifications -->
+                <div class="control-item">
+                    <button class="btn-control notifications" data-notifications>
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">3</span>
+                    </button>
+                </div>
+
+                <!-- Language selector -->
+                <div class="control-item">
+                    <div class="language-selector">
+                        <button class="btn-control language-toggle">
+                            <i class="fas fa-globe"></i>
+                            PT/BR
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- User menu -->
+                <div class="control-item">
+                    <div class="user-menu dropdown">
+                        <button class="btn-control user-toggle dropdown-toggle" data-dropdown="user">
+                            <div class="user-avatar">
+                                <img src="../static/images/default-avatar.png" alt="User">
+                            </div>
+                            <span class="user-name">João Silva</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="dropdown-menu user-dropdown" id="user-dropdown">
+                            <div class="user-info">
+                                <div class="user-avatar-large">
+                                    <img src="../static/images/default-avatar.png" alt="User">
+                                </div>
+                                <div class="user-details">
+                                    <div class="user-name">João Silva</div>
+                                    <div class="user-email">joao@email.com</div>
+                                    <div class="user-plan">Plano Premium</div>
+                                </div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="/profile" class="dropdown-item">
+                                <i class="fas fa-user"></i>
+                                Meu Perfil
+                            </a>
+                            <a href="/account" class="dropdown-item">
+                                <i class="fas fa-cog"></i>
+                                Configurações da Conta
+                            </a>
+                            <a href="/subscription" class="dropdown-item">
+                                <i class="fas fa-crown"></i>
+                                Plano e Cobrança
+                            </a>
+                            <a href="/security" class="dropdown-item">
+                                <i class="fas fa-shield-alt"></i>
+                                Segurança
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="/support" class="dropdown-item">
+                                <i class="fas fa-headset"></i>
+                                Suporte
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="/logout" class="dropdown-item logout">
+                                <i class="fas fa-sign-out-alt"></i>
+                                Sair
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="container">
+                <div class="page-title">
+                    <h1>Dashboard</h1>
+                    <p class="page-subtitle">Visão geral dos seus bots e performance</p>
+                </div>
+                <div class="page-actions">
+                    <button class="btn btn-secondary">
+                        <i class="fas fa-download"></i>
+                        Exportar Dados
+                    </button>
+                    <button class="btn btn-primary">
+                        <i class="fas fa-plus"></i>
+                        Criar Novo Bot
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Container -->
+        <div class="container">
+            <!-- Breadcrumb -->
+            <nav class="breadcrumb">
+                <a href="/dashboard" class="breadcrumb-item">
+                    <i class="fas fa-home"></i>
+                    Dashboard
+                </a>
+                <span class="breadcrumb-separator">/</span>
+                <span class="breadcrumb-item active">Visão Geral</span>
+            </nav>
+
+            <!-- Page Content -->
+            <div class="page-content">
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-number">12</div>
+                            <div class="stat-label">Bots Ativos</div>
+                        </div>
+                        <div class="stat-trend positive">
+                            <i class="fas fa-arrow-up"></i>
+                            +2 esta semana
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-number">R$ 15.234,56</div>
+                            <div class="stat-label">Lucro Total</div>
+                        </div>
+                        <div class="stat-trend positive">
+                            <i class="fas fa-arrow-up"></i>
+                            +5.2% este mês
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-number">68.5%</div>
+                            <div class="stat-label">Taxa de Sucesso</div>
+                        </div>
+                        <div class="stat-trend positive">
+                            <i class="fas fa-arrow-up"></i>
+                            +3.1% esta semana
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-number">2.847</div>
+                            <div class="stat-label">Trades Executados</div>
+                        </div>
+                        <div class="stat-trend positive">
+                            <i class="fas fa-arrow-up"></i>
+                            +124 hoje
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Dashboard Content -->
+                <div class="dashboard-grid">
+                    <!-- Charts Section -->
+                    <div class="dashboard-section">
+                        <div class="section-header">
+                            <h2>Performance</h2>
+                            <div class="section-controls">
+                                <select class="form-select">
+                                    <option>Últimos 7 dias</option>
+                                    <option>Últimos 30 dias</option>
+                                    <option>Últimos 90 dias</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="performanceChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Active Bots -->
+                    <div class="dashboard-section">
+                        <div class="section-header">
+                            <h2>Bots Ativos</h2>
+                            <a href="/bots" class="btn btn-outline">Ver Todos</a>
+                        </div>
+                        <div class="bots-list">
+                            <div class="bot-item">
+                                <div class="bot-info">
+                                    <div class="bot-name">Scalping BTC</div>
+                                    <div class="bot-strategy">Scalping Conservative</div>
+                                </div>
+                                <div class="bot-status active">
+                                    <span class="status-indicator"></span>
+                                    Ativo
+                                </div>
+                                <div class="bot-profit positive">+R$ 543,21</div>
+                            </div>
+                            
+                            <div class="bot-item">
+                                <div class="bot-info">
+                                    <div class="bot-name">DCA ETH</div>
+                                    <div class="bot-strategy">Dollar Cost Average</div>
+                                </div>
+                                <div class="bot-status active">
+                                    <span class="status-indicator"></span>
+                                    Ativo
+                                </div>
+                                <div class="bot-profit positive">+R$ 234,87</div>
+                            </div>
+                            
+                            <div class="bot-item">
+                                <div class="bot-info">
+                                    <div class="bot-name">Grid USDT</div>
+                                    <div class="bot-strategy">Grid Trading</div>
+                                </div>
+                                <div class="bot-status paused">
+                                    <span class="status-indicator"></span>
+                                    Pausado
+                                </div>
+                                <div class="bot-profit negative">-R$ 67,43</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <p>&copy; 2025 XBot v2. Todos os direitos reservados.</p>
+                </div>
+                <div class="footer-right">
+                    <a href="/terms">Termos de Uso</a>
+                    <a href="/privacy">Privacidade</a>
+                    <a href="/support">Suporte</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="../static/js/internal-layout.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="../static/js/dashboard.js"></script>
+</body>
+</html>
